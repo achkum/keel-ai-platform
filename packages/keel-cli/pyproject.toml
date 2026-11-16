@@ -1,0 +1,32 @@
+[project]
+name = "keel-cli"
+version = "0.1.0.dev0"
+description = "Keel command-line interface."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+authors = [{ name = "Achyuth Kumar Baddela" }]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
+dependencies = [
+    "keel-core",
+    "typer>=0.12,<1",
+]
+
+[project.scripts]
+keel = "keel_cli.main:app"
+
+[tool.uv.sources]
+keel-core = { workspace = true }
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/keel_cli"]

@@ -1,0 +1,75 @@
+# Reference app 1: an internal knowledge assistant over company documents,
+# with per-user document permissions. The spec format is provisional (keel/v0).
+keel: keel/v0
+
+app:
+  name: knowledge-assistant
+  version: 0.1.0
+  description: Answers questions over internal documents and cites its sources.
+
+profile: strict
+
+model:
+  provider: openai
+  name: gpt-4o-mini
+  fallbacks:
+    - provider: anthropic
+      name: claude-haiku
+  timeout_s: 20
+  max_retries: 2
+
+system_prompt:
+  template: prompts/system.md
+  variables:
+    company: Example AB
+
+rag:
+  sources:
+    - name: handbook
+      uri: file://docs/handbook
+    - name: hr-policies
+      uri: file://docs/hr
+  top_k: 5
+  rerank: true
+  require_citations: true
+
+tools:
+  - name: ticket-lookup
+    mcp_server: mcp://internal/tickets
+    requires_approval: false
+
+access:
+  default: deny
+  roles:
+    - name: employee
+      sources: [handbook]
+      tools: [ticket-lookup]
+    - name: hr
+      sources: [handbook, hr-policies]
+      tools: [ticket-lookup]
+
+guardrails:
+  input: [prompt_injection, pii]
+  output: [pii]
+
+cache_router:
+  cache: semantic
+  budget_usd_per_day: 25
+  rate_limit_per_minute: 60
+
+observability:
+  exporter: otlp
+  log_prompts: false
+
+evals:
+  quality:
+    - name: faithfulness
+      dataset: evals/quality.jsonl
+      min_score: 0.85
+  attack:
+    - name: prompt-injection
+      dataset: evals/attack.jsonl
+      max_failures: 0
+  load:
+    requests_per_second: 20
+    max_p95_latency_ms: 2000

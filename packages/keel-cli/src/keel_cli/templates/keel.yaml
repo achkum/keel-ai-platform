@@ -1,0 +1,26 @@
+# Keel spec. The format is provisional (keel/v0).
+# Docs: https://github.com/achkum/keel-ai-platform
+keel: keel/v0
+
+app:
+  name: my-app
+  version: 0.1.0
+
+profile: strict
+
+model:
+  provider: openai
+  name: gpt-4o-mini
+
+system_prompt:
+  template: prompts/system.md
+
+guardrails:
+  input: [prompt_injection, pii]
+  output: [pii]
+
+evals:
+  quality:
+    - name: smoke
+      dataset: evals/quality.jsonl
+      min_score: 0.8
