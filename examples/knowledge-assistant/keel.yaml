@@ -35,7 +35,7 @@ rag:
 
 tools:
   - name: ticket-lookup
-    mcp_server: mcp://internal/tickets
+    mcp_server: python://keel_local.demo_tools:lookup_ticket
     requires_approval: false
 
 access:

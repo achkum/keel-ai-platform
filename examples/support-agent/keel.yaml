@@ -1,0 +1,72 @@
+# Reference app 2: a support agent with tools. One tool reads, one changes money and needs
+# a human approval. The spec format is provisional (keel/v0).
+keel: keel/v0
+
+app:
+  name: support-agent
+  version: 0.1.0
+  description: Answers support questions from the help centre and can look up tickets and issue refunds.
+
+profile: strict
+
+model:
+  provider: openai
+  name: gpt-4o-mini
+  timeout_s: 20
+  max_retries: 2
+
+system_prompt:
+  template: prompts/system.md
+  variables:
+    company: Example AB
+
+rag:
+  sources:
+    - name: help-centre
+      uri: file://docs/help-centre
+  top_k: 4
+  require_citations: true
+
+tools:
+  - name: lookup-ticket
+    mcp_server: python://keel_local.demo_tools:lookup_ticket
+    requires_approval: false
+  - name: issue-refund
+    mcp_server: python://keel_local.demo_tools:issue_refund
+    requires_approval: true
+
+access:
+  default: deny
+  roles:
+    - name: agent
+      sources: [help-centre]
+      tools: [lookup-ticket, issue-refund]
+    - name: customer
+      sources: [help-centre]
+      tools: []
+
+guardrails:
+  input: [prompt_injection, pii]
+  output: [pii]
+
+cache_router:
+  cache: exact
+  budget_usd_per_day: 10
+  rate_limit_per_minute: 60
+
+observability:
+  exporter: otlp
+  log_prompts: false
+
+evals:
+  quality:
+    - name: help-centre
+      dataset: evals/quality.jsonl
+      min_score: 0.85
+  attack:
+    - name: agency
+      dataset: evals/attack.jsonl
+      max_failures: 0
+  load:
+    requests_per_second: 20
+    max_p95_latency_ms: 2000

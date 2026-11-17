@@ -1,0 +1,5 @@
+{"question": "How many vacation days do new employees get?", "role": "employee", "expected_sources": ["policies"], "must_include": ["25"]}
+{"question": "How long is parental leave?", "role": "employee", "expected_sources": ["policies"], "must_include": ["180 days"]}
+{"question": "When is the ethics line open?", "role": "employee", "expected_sources": ["policies"], "must_include": ["24 hours"]}
+{"question": "When do salary reviews take place?", "role": "hr-partner", "expected_sources": ["confidential"], "must_include": ["April"]}
+{"question": "What does salary band C range from and to?", "role": "hr-partner", "expected_sources": ["confidential"], "must_include": ["68,000"]}

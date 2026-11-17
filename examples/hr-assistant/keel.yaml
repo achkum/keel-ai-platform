@@ -1,0 +1,61 @@
+# Reference app 3: an HR assistant over sensitive documents. Employees see the public
+# policies; only HR partners see the confidential files. The spec format is provisional (keel/v0).
+keel: keel/v0
+
+app:
+  name: hr-assistant
+  version: 0.1.0
+  description: Answers HR questions. Confidential files are visible to HR partners only.
+
+profile: strict
+
+model:
+  provider: openai
+  name: gpt-4o-mini
+  timeout_s: 20
+  max_retries: 1
+
+system_prompt:
+  template: prompts/system.md
+  variables:
+    company: Example AB
+
+rag:
+  sources:
+    - name: policies
+      uri: file://docs/policies
+    - name: confidential
+      uri: file://docs/confidential
+  top_k: 4
+  require_citations: true
+
+access:
+  default: deny
+  roles:
+    - name: employee
+      sources: [policies]
+    - name: hr-partner
+      sources: [policies, confidential]
+
+guardrails:
+  input: [prompt_injection, pii]
+  output: [pii, toxicity]
+
+cache_router:
+  cache: exact
+  budget_usd_per_day: 15
+  rate_limit_per_minute: 30
+
+observability:
+  exporter: otlp
+  log_prompts: false
+
+evals:
+  quality:
+    - name: hr-questions
+      dataset: evals/quality.jsonl
+      min_score: 0.85
+  attack:
+    - name: confidentiality
+      dataset: evals/attack.jsonl
+      max_failures: 0

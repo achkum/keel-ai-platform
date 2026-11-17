@@ -7,8 +7,9 @@
 Keel is an open-source Python platform for taking an AI application from prototype to governed production.
 A developer defines the whole application in one versioned spec. No change ships until its quality, attack and load tests pass.
 
-> **Status: pre-alpha.** Keel is a working title. The spec schema, loader, diff and layer interfaces exist.
-> The runtime, the eval gate and the layer adapters are not built yet. See [What works today](#what-works-today).
+> **Status: pre-alpha.** Keel is a working title. The spec, the runtime pipeline, local-mode adapters for all
+> eight layers, the eval gate and all six CLI commands work on one machine with no external services.
+> Production backends (Postgres, Redis, OIDC, OpenTelemetry export) are not built yet. See [What works today](#what-works-today).
 
 ## The problem
 
@@ -54,26 +55,47 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 
 | Piece | Status |
 |---|---|
-| Typed `keel.yaml` schema for all eight layers and the eval gate | Done |
-| `strict` profile: default-deny access, prompt-injection checks, no prompt logging | Done |
-| Spec loader with safe YAML parsing and located errors | Done |
-| Structural spec diff | Done |
+| Typed `keel.yaml` schema for all eight layers and the eval gate; `strict` profile | Done |
+| Spec loader with safe YAML parsing and located errors; structural spec diff | Done |
 | Layer interfaces (ports) with contract tests | Done |
-| `keel init`, `keel diff` | Done |
-| `keel dev`, `keel eval`, `keel promote`, `keel audit` | Not built yet |
-| Runtime, eval gate, layer adapters | Not built yet |
+| Request pipeline: access, rate limit and budget, guardrails, RAG, cache, tools with provenance and approval, audit | Done |
+| Local mode: in-process adapters for all eight layers (BM25 RAG, role policy, exact cache, JSONL traces and audit log) | Done |
+| Offline extractive model, so evals and the quickstart need no API key | Done |
+| Eval gate: quality, attack and load suites; `promote` pins a release, `--rollback` restores one | Done |
+| `keel init`, `dev`, `eval`, `promote`, `diff`, `audit` | Done |
+| `keel audit` scorecard against the OWASP Top 10 for LLM Applications 2025 | Done |
+| Real model providers through LiteLLM (optional extra, needs an API key) | Done, untested against live APIs |
+| Semantic cache, MCP servers, OIDC login, Postgres, Redis, OpenTelemetry export | Not built yet |
 
 ## Try it
 
-You need [uv](https://docs.astral.sh/uv/) and Python 3.12 or newer.
+You need [uv](https://docs.astral.sh/uv/) and Python 3.12 or newer. No API key is needed.
 
 ```bash
 git clone https://github.com/achkum/keel-ai-platform.git
 cd keel-ai-platform
 uv sync
 uv run keel init my-app
-uv run keel diff my-app/keel.yaml examples/knowledge-assistant/keel.yaml
+uv run keel eval my-app/keel.yaml --offline        # quality and attack suites
+uv run keel dev my-app/keel.yaml --offline --role reader --ask "When is support available?"
+uv run keel promote my-app/keel.yaml --offline     # full gate, then pins release 0.1.0
+uv run keel audit my-app/keel.yaml                 # OWASP LLM Top 10 scorecard
 ```
+
+Run the reference apps the same way:
+
+```bash
+uv run keel eval examples/knowledge-assistant/keel.yaml --offline
+uv run keel eval examples/support-agent/keel.yaml --offline
+uv run keel eval examples/hr-assistant/keel.yaml --offline
+```
+
+Exit codes: `0` success, `1` a check failed or the spec is invalid, `3` a `dev --ask` request was not
+answered, `4` the gate could not run (for example a missing dataset).
+`keel dev` without `--ask` serves a local HTTP API on `127.0.0.1`. It trusts the identity in the request
+body, so use it for development only.
+
+State (traces, audit log, releases, reports) is written to a `.keel/` folder next to the spec.
 
 A spec looks like this ([full example](examples/knowledge-assistant/keel.yaml)):
 
@@ -103,24 +125,21 @@ evals:
 
 ```
 packages/
-  keel-core/   spec schema, loader, diff, layer interfaces
-  keel-cli/    the keel command
-examples/      reference apps
+  keel-core/   spec schema, loader, diff, layer interfaces, request pipeline, audit
+  keel-local/  in-process adapters for all eight layers (local mode)
+  keel-eval/   eval gate, promote and rollback
+  keel-cli/    the keel command and the dev server
+examples/      reference apps (knowledge-assistant, support-agent, hr-assistant)
 docs/          architecture and decision records (ADRs)
 ```
 
 ## Build order
 
-1. Spec and core ← *in progress*
-2. Observability
-3. Model and system prompt
-4. Eval runner and gate
-5. RAG
-6. Tools · MCP
-7. Access
-8. Guardrails
-9. Cache and router
-10. Console, docs and hardening
+1. Spec and core (done)
+2. Request pipeline and local mode (done)
+3. Eval runner and gate (done)
+4. Production backends: Postgres, Redis, OIDC, OpenTelemetry, MCP, semantic cache ← *next*
+5. Console, docs and hardening
 
 Observability and the gate come early because every later layer is checked by them.
 

@@ -48,6 +48,30 @@ Every piece of data the agent reads carries a label for its source and sensitivi
 One policy decides which labels may reach which action or output.
 The idea comes from CaMeL (Google DeepMind, 2025) and FIDES (Microsoft, 2025). Keel implements a simple label-and-gate version.
 
+## Request pipeline
+
+`keel_core.runtime.Runtime.handle` runs every request through the same steps. Each step records a trace event with the
+same trace id. Policy outcomes (blocked, denied, limited) come back as a status, never as an exception.
+
+1. **Request.** The trace id is the caller's request id or a new one. The query is traced only if `observability.log_prompts` is true.
+2. **Access.** The policy must allow `ask` on the app. Otherwise the status is `denied` (`access:app`).
+3. **Rate limit and budget.** Over the per-minute limit or the daily budget gives `limited` (`rate_limit`, `budget`). Both are keyed by tenant, or by user when there is no tenant. The cost of every model call is added to the budget.
+4. **Input guardrails**, in spec order. A failed check gives `blocked` (`guardrail:<name>`). A check that redacts passes the redacted text on.
+5. **System prompt.** The template is rendered and gets a version, which is returned with the answer.
+6. **RAG.** Only sources the principal may `retrieve` are searched. Documents from other sources are dropped and traced. The runtime labels each document with `source:<name>`.
+7. **Cache.** The key covers the spec hash, prompt version, query and the retrieved document refs. The cache is scoped per principal, so one user never gets another user's cached answer.
+8. **Model and tools.** Models are tried in order (primary, then fallbacks), each with retries and a timeout. Only tools the principal may `call` and that are available are offered. Each tool call is checked for provenance and approval (below). The loop stops after `max_tool_steps` rounds with `blocked` (`step_limit`).
+9. **Output guardrails.** Same rules as input.
+10. **Citations.** Documents whose `[n]` marker appears in the answer. If the answer has no markers, all documents in context.
+11. **Audit.** One entry per request: trace id, spec hash, user, tenant, status, blocked-by, model, prompt version, cost, sources and tools.
+
+### Provenance rule for tools
+
+Every document and tool output has labels. Text from a suspicious chunk (it looks like an instruction planted in a document) is labelled `trust:untrusted`. Output of any tool is always `trust:untrusted`.
+If any untrusted label is in the context, a tool call is stopped with `blocked` (`provenance:tool:<name>`) unless a human approved that tool for this request.
+A tool with `requires_approval` is always stopped (`approval:tool:<name>`) without that approval.
+So content the agent reads can never start an action on its own. The attack suites in the gate check this with planted-instruction documents.
+
 ## Layer scope
 
 | # | Layer | Scope |

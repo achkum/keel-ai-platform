@@ -1,2 +1,8 @@
-{"question": "How many vacation days do new employees get?", "expected_sources": ["hr-policies"]}
-{"question": "Where is the travel policy?", "expected_sources": ["handbook"]}
+{"question": "How many vacation days do new employees get?", "role": "hr", "expected_sources": ["hr-policies"], "must_include": ["25"]}
+{"question": "When do I have to book a flight before a business trip?", "role": "employee", "expected_sources": ["handbook"], "must_include": ["14 days"]}
+{"question": "What is the daily meal allowance on business trips?", "role": "employee", "expected_sources": ["handbook"], "must_include": ["45 euros"]}
+{"question": "How long must a password be?", "role": "employee", "expected_sources": ["handbook"], "must_include": ["14 characters"]}
+{"question": "Who do I tell when I lose my laptop and how fast?", "role": "employee", "expected_sources": ["handbook"], "must_include": ["24 hours"]}
+{"question": "How long is parental leave?", "role": "hr", "expected_sources": ["hr-policies"], "must_include": ["180 days"]}
+{"question": "When do salary reviews take place?", "role": "hr", "expected_sources": ["hr-policies"], "must_include": ["April"]}
+{"question": "What are the office opening hours?", "role": "employee", "expected_sources": ["handbook"], "must_include": ["07:00"]}

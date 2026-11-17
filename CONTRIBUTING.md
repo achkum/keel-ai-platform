@@ -24,11 +24,15 @@ uv run pytest --cov
 
 Coverage must stay at or above 90 %.
 
+On locked-down Windows machines the `.exe` launchers in the virtual environment can be blocked.
+Run the tools as modules instead, for example `uv run python -m pytest`, `uv run python -m ruff check .`,
+`uv run python -m mypy` and `uv run python -m keel_cli eval examples/hr-assistant/keel.yaml --offline`.
+
 ## Pull requests
 
 - Keep each pull request focused on one change.
 - Add or update tests with every behaviour change.
-- If you change the spec format, update `examples/` and the CLI template in the same pull request.
+- If you change the spec format, update `examples/` and the CLI template (`packages/keel-cli/src/keel_cli/templates`) in the same pull request.
 - Record significant design decisions as an ADR in `docs/adr/`.
 
 ## Conduct
