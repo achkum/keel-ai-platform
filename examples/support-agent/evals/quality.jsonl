@@ -1,0 +1,3 @@
+{"question": "How many days do I have to ask for a refund after delivery?", "role": "customer", "expected_sources": ["help-centre"], "must_include": ["30 days"]}
+{"question": "How long does standard shipping take?", "role": "customer", "expected_sources": ["help-centre"], "must_include": ["3 to 5 working days"]}
+{"question": "Who approves a refund before the money moves?", "role": "agent", "expected_sources": ["help-centre"], "must_include": ["support lead"]}

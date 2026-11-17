@@ -44,3 +44,10 @@ jobs:
 
       - name: Validate example specs
         run: uv run python -c "from pathlib import Path; from keel_core import load_spec; [load_spec(p) for p in Path('examples').rglob('keel.yaml')]"
+
+      - name: Run the gate offline and audit each example
+        run: |
+          for spec in examples/*/keel.yaml; do
+            uv run keel eval "$spec" --offline
+            uv run keel audit "$spec"
+          done

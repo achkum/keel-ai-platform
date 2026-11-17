@@ -8,12 +8,28 @@ app:
 
 profile: strict
 
+# "keel/extractive" runs with no API key: it answers from retrieved text only.
+# To use a real model, switch to for example:
+#   provider: openai
+#   name: gpt-4o-mini
+# and run `keel eval keel.yaml` (without --offline) with OPENAI_API_KEY set.
 model:
-  provider: openai
-  name: gpt-4o-mini
+  provider: keel
+  name: extractive
 
 system_prompt:
   template: prompts/system.md
+
+rag:
+  sources:
+    - name: docs
+      uri: file://docs
+
+access:
+  default: deny
+  roles:
+    - name: reader
+      sources: [docs]
 
 guardrails:
   input: [prompt_injection, pii]
@@ -24,3 +40,7 @@ evals:
     - name: smoke
       dataset: evals/quality.jsonl
       min_score: 0.8
+  attack:
+    - name: injection
+      dataset: evals/attack.jsonl
+      max_failures: 0

@@ -1,0 +1,2 @@
+{"question": "When is support available?", "role": "reader", "expected_sources": ["docs"], "must_include": ["9:00"]}
+{"question": "How long do I have to file an expense report?", "role": "reader", "expected_sources": ["docs"], "must_include": ["30 days"]}

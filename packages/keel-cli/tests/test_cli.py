@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from keel_cli.main import EXIT_INVALID_SPEC, EXIT_NOT_IMPLEMENTED, app
+from keel_cli.main import EXIT_INVALID_SPEC, app
 from keel_core import load_spec
 
 runner = CliRunner()
@@ -26,6 +26,9 @@ def test_init_creates_a_valid_project(tmp_path: Path) -> None:
     assert spec.profile == "strict"
     assert (tmp_path / "prompts" / "system.md").is_file()
     assert (tmp_path / "evals" / "quality.jsonl").is_file()
+    assert (tmp_path / "evals" / "attack.jsonl").is_file()
+    assert (tmp_path / "docs" / "handbook.md").is_file()
+    assert spec.model.provider == "keel"
 
 
 def test_init_refuses_to_overwrite(tmp_path: Path) -> None:
@@ -67,7 +70,7 @@ def test_diff_identical_specs(two_specs: tuple[Path, Path]) -> None:
 def test_diff_reports_changes(two_specs: tuple[Path, Path]) -> None:
     old, new = two_specs
     new.write_text(
-        new.read_text(encoding="utf-8").replace("name: gpt-4o-mini", "name: gpt-4o"),
+        new.read_text(encoding="utf-8").replace("  name: extractive", "  name: extractive-v2"),
         encoding="utf-8",
     )
 
@@ -75,7 +78,7 @@ def test_diff_reports_changes(two_specs: tuple[Path, Path]) -> None:
     strict = runner.invoke(app, ["diff", str(old), str(new), "--exit-code"])
 
     assert plain.exit_code == 0
-    assert "~ model.name: 'gpt-4o-mini' -> 'gpt-4o'" in plain.output
+    assert "~ model.name: 'extractive' -> 'extractive-v2'" in plain.output
     assert strict.exit_code == 1
 
 
@@ -87,11 +90,3 @@ def test_diff_invalid_spec(tmp_path: Path, two_specs: tuple[Path, Path]) -> None
 
     assert result.exit_code == EXIT_INVALID_SPEC
     assert "invalid spec" in result.output
-
-
-@pytest.mark.parametrize("command", ["dev", "eval", "promote", "audit"])
-def test_unbuilt_commands_say_so(command: str) -> None:
-    result = runner.invoke(app, [command])
-
-    assert result.exit_code == EXIT_NOT_IMPLEMENTED
-    assert "not implemented yet" in result.output

@@ -3,7 +3,8 @@
 from importlib.metadata import PackageNotFoundError, version
 
 from keel_core.errors import KeelError, SpecError, SpecIssue
-from keel_core.spec import KeelSpec, diff_specs, load_spec, parse_spec
+from keel_core.runtime import Adapters, Request, Response, Runtime
+from keel_core.spec import KeelSpec, diff_specs, load_spec, parse_spec, spec_hash
 
 try:
     __version__ = version("keel-core")
@@ -11,12 +12,17 @@ except PackageNotFoundError:  # pragma: no cover - only when run from a source t
     __version__ = "0.0.0"
 
 __all__ = [
+    "Adapters",
     "KeelError",
     "KeelSpec",
+    "Request",
+    "Response",
+    "Runtime",
     "SpecError",
     "SpecIssue",
     "__version__",
     "diff_specs",
     "load_spec",
     "parse_spec",
+    "spec_hash",
 ]
